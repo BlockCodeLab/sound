@@ -1,0 +1,15 @@
+waveSurfer.contextMenu.export: export
+waveSurfer.contextMenu.delete: delete
+
+waveSurfer.actionButton.upload: Upload Sound
+waveSurfer.actionButton.surprise: Surprise
+waveSurfer.actionButton.record: Record
+waveSurfer.actionButton.sound: Choose a Sound
+
+waveSurfer.surfer.sound: Sound
+waveSurfer.surfer.play: Play
+waveSurfer.surfer.record: Record
+waveSurfer.surfer.stop: Stop
+waveSurfer.surfer.name: name
+
+waveSurfer.error.formatNotSupperted: This wav format is not supported.

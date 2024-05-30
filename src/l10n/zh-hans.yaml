@@ -1,0 +1,15 @@
+waveSurfer.contextMenu.export: 导出
+waveSurfer.contextMenu.delete: 删除
+
+waveSurfer.actionButton.upload: 上传声音
+waveSurfer.actionButton.surprise: 随机
+waveSurfer.actionButton.record: 录制
+waveSurfer.actionButton.sound: 选择一个声音
+
+waveSurfer.surfer.sound: 声音
+waveSurfer.surfer.play: 播放
+waveSurfer.surfer.record: 录音
+waveSurfer.surfer.stop: 停止
+waveSurfer.surfer.name: 名称
+
+waveSurfer.error.formatNotSupperted: 声音文件格式不支持。
