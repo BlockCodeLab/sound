@@ -8,8 +8,8 @@
   },
   "devDependencies": {
     "bun-types": "latest",
-    "bun-loader-css": "link:bun-loader-css",
-    "bun-loader-yaml": "link:bun-loader-yaml"
+    "bun-loader-css": "github:kankungyip/bun-loader-css",
+    "bun-loader-yaml": "github:kankungyip/bun-loader-yaml"
   },
   "dependencies": {
     "@blockcode/core": "workspace:*",
