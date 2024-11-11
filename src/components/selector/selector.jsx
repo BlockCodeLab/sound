@@ -102,7 +102,7 @@ export default function Selector({ soundList, soundIndex, onSelect, onSetupLibra
     <div className={styles.selectorWrapper}>
       <IconSelector
         displayOrder
-        id="paint-selector"
+        id="wave-selector"
         className={styles.selectorItemsWrapper}
         items={soundList.map((sound, index) => ({
           ...sound,
