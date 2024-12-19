@@ -1,22 +1,16 @@
 {
-  "name": "@blockcode/wave-surfer",
-  "module": "dist/index.js",
+  "name": "@blockcode/sound",
+  "private": "true",
+  "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "build": "bun-build",
-    "dev": "bun-build --watch ./src"
+  "module": "./dist/index.js",
+  "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
+    "@preact/signals": "^1.3.0",
+    "preact": "^10.25.0",
+    "wavesurfer.js": "^7.7.13"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "bun-loader-css": "github:kankungyip/bun-loader-css",
-    "bun-loader-yaml": "github:kankungyip/bun-loader-yaml"
-  },
-  "dependencies": {
-    "@blockcode/core": "workspace:*",
-    "@blockcode/ui": "workspace:*",
-    "audiobuffer-to-wav": "^1.0.0",
-    "preact": "^10.18.1",
-    "wavefile": "^11.0.0",
-    "wavesurfer.js": "^7.7.13"
+    "@types/bun": "latest"
   }
 }

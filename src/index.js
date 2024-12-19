@@ -1,10 +1,7 @@
-export { WaveFile } from 'wavefile';
-export { WaveSurfer } from './wave-surfer';
+import './l10n';
 
-import en from './l10n/en.yaml';
-import zhHans from './l10n/zh-hans.yaml';
+export { loadSoundFromFile, loadSoundFromURL } from './lib/load-sound';
 
-export const locales = {
-  en,
-  'zh-Hans': zhHans,
-};
+export { SoundEditor } from './components/sound-editor/sound-editor';
+
+export { soundTab } from './components/tab/sound-tab';

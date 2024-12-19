@@ -1,134 +1,141 @@
-import { useState } from 'preact/hooks';
-import { useLocale, useLayout, useEditor } from '@blockcode/core';
-import { IconSelector, ActionButton } from '@blockcode/ui';
-import { loadWave, uploadWave } from '../../lib/load-wave';
-import formatTime from '../../lib/format-time';
-import uid from '../../lib/uid';
+import { batch } from '@preact/signals';
+import { nanoid } from '@blockcode/utils';
+import {
+  useTranslator,
+  useProjectContext,
+  translate,
+  setAlert,
+  delAlert,
+  openAsset,
+  addAsset,
+  delAsset,
+} from '@blockcode/core';
+import { loadSoundFromFile } from '../../lib/load-sound';
+import { formatTime } from '../../lib/format-time';
 
+import { Text, IconSelector, ActionButton } from '@blockcode/core';
 import styles from './selector.module.css';
-import thumbIcon from './icon-thumb.svg';
-import soundIcon from './icon-sound.svg';
-import searchIcon from './icon-search.svg';
-import recordIcon from './icon-record.svg';
-import surpriseIcon from './icon-surprise.svg';
-import fileUploadIcon from './icon-file-upload.svg';
 
-export default function Selector({ soundList, soundIndex, onSelect, onSetupLibrary }) {
-  const [soundsLibrary, setSoundsLibrary] = useState(false);
-  const { getText } = useLocale();
-  const { createAlert, removeAlert } = useLayout();
-  const { addAsset, deleteAsset } = useEditor();
+import thumbIcon from './icons/icon-thumb.svg';
+import soundIcon from './icons/icon-sound.svg';
+import searchIcon from './icons/icon-search.svg';
+import recordIcon from './icons/icon-record.svg';
+import surpriseIcon from './icons/icon-surprise.svg';
+import fileUploadIcon from './icons/icon-file-upload.svg';
+import { useCallback } from 'preact/hooks';
 
-  const { SoundsLibrary } = onSetupLibrary();
+export function Selector({ onShowLibrary, onSurprise }) {
+  const translator = useTranslator();
+  const { assets, assetId } = useProjectContext();
 
-  const handleShowLibrary = () => setSoundsLibrary(true);
-  const handleCloseLibrary = () => setSoundsLibrary(false);
+  const sounds = assets.value.filter((res) => /^audio\//.test(res.type));
 
-  const handleSelectAsset = async (asset) => {
-    const assetId = uid();
-    createAlert('importing', { id: assetId });
+  // 默认打开第一个声音
+  if (!sounds.find((sound) => sound.id === assetId.value) && sounds[0]) {
+    openAsset(sounds[0].id);
+  }
 
-    const wav = await loadWave(`./assets/${asset.id}.wav`);
-    addAsset({
-      ...asset,
-      id: assetId,
-      type: 'audio/wav',
-      data: wav.toBase64(),
-      sampleCount: wav.data.chunkSize,
-    });
-    removeAlert(assetId);
-
-    onSelect(soundList.length);
-  };
-
-  const handleSurprise = () => handleSelectAsset(SoundsLibrary.surprise());
-
-  const handleUploadFile = () => {
+  const handleUploadFile = useCallback(() => {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = 'audio/wav';
+    fileInput.accept = '.wav,.mp3';
     fileInput.multiple = true;
     fileInput.click();
     fileInput.addEventListener('change', async (e) => {
-      const alertId = uid();
-      createAlert('importing', { id: alertId });
+      const alertId = nanoid();
+      setAlert('importing', { id: alertId });
 
       try {
         for (const file of e.target.files) {
-          const wavId = uid();
+          const wavId = nanoid();
           const wavName = file.name.slice(0, file.name.lastIndexOf('.'));
-          const wav = await uploadWave(file);
-          console.log(wav);
+          const data = await loadSoundFromFile(file);
           addAsset({
+            ...data,
             id: wavId,
-            type: file.type,
             name: wavName,
-            data: wav.toBase64(),
-            rate: wav.fmt.sampleRate,
-            sampleCount: wav.data.chunkSize,
           });
         }
-        removeAlert(alertId);
       } catch (err) {
-        createAlert(
+        setAlert(
           {
             id: alertId,
-            message: getText('waveSurfer.error.formatNotSupperted', 'This wav format is not supported.'),
+            message: (
+              <Text
+                id="sound.error.formatNotSupperted"
+                defaultMessage="This wav format is not supported."
+              />
+            ),
           },
           2000,
         );
       }
-    });
-  };
 
-  const handleRecordSound = () => {
-    addAsset({
-      id: uid(),
-      type: 'audio/wav',
-      name: getText(`waveSurfer.surfer.sound`, 'Sound'),
-      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YQAAAAA=',
-      rate: 11025,
-      sampleCount: 0,
-      record: true,
+      delAlert(alertId);
     });
-    onSelect(soundList.length);
-  };
+  }, []);
 
-  const handleDeleteSound = (index) => {
-    deleteAsset(soundList[index].id);
-  };
+  const handleRecordSound = useCallback(() => {
+    const soundId = nanoid();
+    batch(() => {
+      addAsset({
+        id: soundId,
+        type: 'audio/mp3',
+        name: translate('sound.sound', 'Sound', translator),
+        data: '',
+        rate: 22050,
+        sampleCount: 0,
+        record: true,
+      });
+      openAsset(soundId);
+    });
+  }, []);
+
+  const handleDeleteSound = useCallback((i) => delAsset(sounds[i].id), [sounds]);
+
+  const wrapDeleteSound = useCallback((i) => () => delAsset(sounds[i].id), [sounds]);
 
   return (
     <div className={styles.selectorWrapper}>
       <IconSelector
         displayOrder
-        id="wave-selector"
+        id="sound-selector"
         className={styles.selectorItemsWrapper}
-        items={soundList.map((sound, index) => ({
+        items={sounds.map((sound, i) => ({
           ...sound,
-          details: `${formatTime(sound.sampleCount / sound.rate || 0)}`,
+          details: `${formatTime(sound.sampleCount / sound.rate) || 0}`,
           icon: thumbIcon,
-          order: index,
+          order: i,
           className: styles.selectorItem,
           contextMenu: [
             [
               {
-                label: getText('waveSurfer.contextMenu.export', 'export'),
+                label: (
+                  <Text
+                    id="sound.contextMenu.export"
+                    defaultMessage="export"
+                  />
+                ),
                 disabled: true,
               },
             ],
             [
               {
-                label: getText('waveSurfer.contextMenu.delete', 'delete'),
+                label: (
+                  <Text
+                    id="sound.contextMenu.delete"
+                    defaultMessage="delete"
+                  />
+                ),
                 className: styles.deleteMenuItem,
-                disabled: soundList.length <= 1,
-                onClick: () => handleDeleteSound(index),
+                disabled: sounds.length <= 1,
+                onClick: wrapDeleteSound(i),
               },
             ],
           ],
         }))}
-        selectedIndex={soundIndex}
-        onSelect={onSelect}
+        selectedId={assetId.value}
+        onSelect={(i) => openAsset(sounds[i].id)}
         onDelete={handleDeleteSound}
       />
 
@@ -137,39 +144,57 @@ export default function Selector({ soundList, soundIndex, onSelect, onSetupLibra
           tooltipPlacement="right"
           className={styles.addButton}
           icon={soundIcon}
-          tooltip={getText('waveSurfer.actionButton.sound', 'Choose a Sound')}
-          onClick={handleShowLibrary}
+          tooltip={
+            <Text
+              id="sound.actionButton.sound"
+              defaultMessage="Choose a Sound"
+            />
+          }
+          onClick={onShowLibrary}
           moreButtons={[
             {
               icon: fileUploadIcon,
-              tooltip: getText('waveSurfer.actionButton.upload', 'Upload Sound'),
+              tooltip: (
+                <Text
+                  id="sound.actionButton.upload"
+                  defaultMessage="Upload Sound"
+                />
+              ),
               onClick: handleUploadFile,
             },
             {
               icon: surpriseIcon,
-              tooltip: getText('waveSurfer.actionButton.surprise', 'Surprise'),
-              onClick: handleSurprise,
+              tooltip: (
+                <Text
+                  id="sound.actionButton.surprise"
+                  defaultMessage="Surprise"
+                />
+              ),
+              onClick: onSurprise,
             },
             {
               icon: recordIcon,
-              tooltip: getText('waveSurfer.actionButton.record', 'Record'),
+              tooltip: (
+                <Text
+                  id="sound.actionButton.record"
+                  defaultMessage="Record"
+                />
+              ),
               onClick: handleRecordSound,
             },
             {
               icon: searchIcon,
-              tooltip: getText('waveSurfer.actionButton.sound', 'Choose a Sound'),
-              onClick: handleShowLibrary,
+              tooltip: (
+                <Text
+                  id="sound.actionButton.sound"
+                  defaultMessage="Choose a Sound"
+                />
+              ),
+              onClick: onShowLibrary,
             },
           ]}
         />
       </div>
-
-      {soundsLibrary && SoundsLibrary && (
-        <SoundsLibrary
-          onClose={handleCloseLibrary}
-          onSelect={handleSelectAsset}
-        />
-      )}
     </div>
   );
 }

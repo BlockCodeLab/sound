@@ -1,13 +1,3 @@
-# @blockcode/wave-surfer
+# 声音编辑组件
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To development:
-
-```bash
-bun run dev
-```
+查看声音的波形图，可以对声音进行播放和录制。

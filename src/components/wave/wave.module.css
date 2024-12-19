@@ -1,4 +1,4 @@
-.surfer-wrapper {
+.wave-wrapper {
   flex: 1;
   padding: calc(var(--space) * 1.5);
   border-left: 1px solid var(--ui-black-transparent);
@@ -7,7 +7,7 @@
   flex-direction: column;
 }
 
-.surfer-wrapper.disabled {
+.wave-wrapper.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
@@ -104,7 +104,7 @@
 }
 
 .label-button.selected {
-  background: var(--motion-primary);
+  background: var(--theme-primary);
   color: var(--ui-white);
 }
 
@@ -124,11 +124,11 @@
 }
 
 .play-button {
-  background: var(--motion-primary);
+  background: var(--theme-primary);
 }
 
 .record-button {
-  background: var(--red-primary);
+  background: var(--error-primary);
 }
 
 .wave-box-wrapper {
@@ -138,6 +138,10 @@
   margin: 20px var(--space);
   border: 1px solid var(--ui-black-transparent);
   border-radius: calc(var(--space) * 0.8);
-  background: hsl(from var(--sound-primary) h s l / 0.15);
+  background: hsl(from var(--blocks-sounds-primary) h s l / 0.15);
   min-height: 160px;
+}
+
+.wave-box-wrapper.hidden > div {
+  visibility: hidden;
 }

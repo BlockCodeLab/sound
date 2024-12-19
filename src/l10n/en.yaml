@@ -1,15 +1,15 @@
-waveSurfer.contextMenu.export: export
-waveSurfer.contextMenu.delete: delete
+sound.sound: Sound
+sound.play: Play
+sound.record: Record
+sound.stop: Stop
+sound.name: name
 
-waveSurfer.actionButton.upload: Upload Sound
-waveSurfer.actionButton.surprise: Surprise
-waveSurfer.actionButton.record: Record
-waveSurfer.actionButton.sound: Choose a Sound
+sound.contextMenu.export: export
+sound.contextMenu.delete: delete
 
-waveSurfer.surfer.sound: Sound
-waveSurfer.surfer.play: Play
-waveSurfer.surfer.record: Record
-waveSurfer.surfer.stop: Stop
-waveSurfer.surfer.name: name
+sound.actionButton.upload: Upload Sound
+sound.actionButton.surprise: Surprise
+sound.actionButton.record: Record
+sound.actionButton.sound: Choose a Sound
 
-waveSurfer.error.formatNotSupperted: This wav format is not supported.
+sound.error.formatNotSupperted: This wav format is not supported.

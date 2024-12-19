@@ -1,27 +1,40 @@
+import { useRef, useEffect, useCallback } from 'preact/hooks';
+import { classNames } from '@blockcode/utils';
+import { useTranslator, useProjectContext, translate, maybeTranslate, setAsset } from '@blockcode/core';
+import { loadSoundFromBlob } from '../../lib/load-sound';
+
 import WaveSurfer from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record.js';
-import { useRef, useEffect } from 'preact/hooks';
-import { useLocale, useEditor } from '@blockcode/core';
-import { classNames, Label, BufferedInput, Button } from '@blockcode/ui';
-import { loadWaveFromBlob } from '../../lib/load-wave';
 
-import styles from './surfer.module.css';
-import recordIcon from '../selector/icon-record.svg';
+import { Label, BufferedInput, Button } from '@blockcode/core';
+import styles from './wave.module.css';
+
+import recordIcon from '../selector/icons/icon-record.svg';
 import playIcon from './icon-play.svg';
 import stopIcon from './icon-stop.svg';
 
-export default function Painter({ soundList, soundIndex }) {
+const waveRecorder = RecordPlugin.create();
+
+let recordTimer;
+
+export function Wave() {
   const ref = useRef();
   const playRef = useRef();
   const recordRef = useRef();
-  const { getText } = useLocale();
-  const { modifyAsset } = useEditor();
 
-  const soundAsset = soundList[soundIndex];
-  const disabled = !soundAsset;
+  const translator = useTranslator();
+  const { asset } = useProjectContext();
 
-  if (ref.ws) {
-    ref.ws.stop();
+  const sound = asset.value;
+  const disabled = !sound || !/^audio\//.test(sound.type);
+
+  useEffect(() => {
+    if (!ref.ws) return;
+
+    if (ref.ws.isPlaying()) {
+      ref.ws.stop();
+    }
+
     ref.ws.setTime(0);
     setTimeout(() => {
       ref.ws.setOptions({
@@ -29,34 +42,35 @@ export default function Painter({ soundList, soundIndex }) {
         cursorWidth: 0,
       });
     });
-  }
 
-  if (ref.record) {
-    ref.record.soundAsset = soundAsset;
-  }
+    ref.ws.empty();
+    if (sound?.sampleCount > 0) {
+      ref.ws.load(`data:${sound.type};base64,${sound.data}`);
+    }
+    ref.record.sound = sound;
 
-  if (playRef.current) {
-    playRef.current.src = playIcon;
-    playRef.current.title = getText('waveSurfer.surfer.play', 'Play');
-  }
+    if (playRef.current) {
+      playRef.current.src = playIcon;
+      playRef.current.title = translate('sound.play', 'Play', translator);
+    }
 
-  if (recordRef.current) {
-    recordRef.current.src = recordIcon;
-    recordRef.current.title = getText('waveSurfer.surfer.record', 'Record');
-  }
+    if (recordRef.current) {
+      recordRef.current.src = recordIcon;
+      recordRef.current.title = translate('sound.record', 'Record', translator);
+    }
+  }, [sound, disabled]);
 
-  const handleChange = (key, value) => {
-    modifyAsset({
-      ...soundAsset,
+  const handleChange = useCallback((key, value) => {
+    setAsset({
       [key]: value,
     });
-  };
+  }, []);
 
-  const handlePlayOrStop = () => {
+  const handlePlayOrStop = useCallback(() => {
     if (ref.ws) {
       if (ref.ws.isPlaying()) {
         ref.ws.stop();
-      } else if (soundAsset.sampleCount > 0) {
+      } else if (sound.sampleCount > 0) {
         ref.ws.play();
       }
     }
@@ -71,12 +85,12 @@ export default function Painter({ soundList, soundIndex }) {
         }
       });
     }
-  };
+  }, [sound]);
 
-  const handlePlay = () => {
+  const handlePlay = useCallback(() => {
     if (playRef.current) {
       playRef.current.src = stopIcon;
-      playRef.current.title = getText('waveSurfer.surfer.stop', 'Stop');
+      playRef.current.title = translate('sound.stop', 'Stop', translator);
     }
     if (ref.ws) {
       ref.ws.setOptions({
@@ -89,12 +103,12 @@ export default function Painter({ soundList, soundIndex }) {
       recordButton.disabled = false;
       recordButton.classList.remove(styles.groupButtonToggledOff);
     }
-  };
+  }, []);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     if (playRef.current) {
       playRef.current.src = playIcon;
-      playRef.current.title = getText('waveSurfer.surfer.play', 'Play');
+      playRef.current.title = translate('sound.play', 'Play', translator);
       if (ref.ws) {
         ref.ws.setTime(0);
         setTimeout(() => {
@@ -107,37 +121,36 @@ export default function Painter({ soundList, soundIndex }) {
     }
     if (recordRef.current) {
       recordRef.current.src = recordIcon;
-      recordRef.current.title = getText('waveSurfer.surfer.record', 'Record');
+      recordRef.current.title = translate('sound.record', 'Record', translator);
 
       const recordButton = recordRef.current.parentElement.parentElement;
       recordButton.disabled = false;
       recordButton.classList.remove(styles.groupButtonToggledOff);
     }
-  };
+  }, []);
 
-  const handleSeeking = () => {
+  const handleSeeking = useCallback(() => {
     if (ref.ws && !ref.record.isRecording()) {
       ref.ws.setOptions({
         cursorColor: 'hsla(215, 100%, 65%, 1)',
         cursorWidth: 1,
       });
     }
-  };
+  }, []);
 
-  const handleRecord = () => {
+  const handleRecord = useCallback(() => {
     if (recordRef.current) {
       recordRef.current.src = stopIcon;
-      recordRef.current.title = getText('waveSurfer.surfer.stop', 'Stop');
+      recordRef.current.title = translate('sound.stop', 'Stop', translator);
     }
     if (playRef.current) {
       const playButton = playRef.current.parentElement.parentElement;
       playButton.disabled = true;
       playButton.classList.add(styles.groupButtonToggledOff);
     }
-  };
+  }, []);
 
-  let recordTimer;
-  const handleRecordOrStop = () => {
+  const handleRecordOrStop = useCallback(() => {
     if (ref.record) {
       if (ref.record.isRecording()) {
         ref.record.stopRecording();
@@ -148,32 +161,18 @@ export default function Painter({ soundList, soundIndex }) {
         recordTimer = setTimeout(handleRecordOrStop, 10000);
       }
     }
-  };
+  }, []);
 
-  const handleRecordEnd = async (blob) => {
-    const wav = await loadWaveFromBlob(blob);
-    modifyAsset({
-      ...ref.record.soundAsset,
-      data: wav.toBase64(),
-      sampleCount: wav.data.chunkSize,
-    });
+  const handleRecordEnd = useCallback(async (blob) => {
+    const asset = await loadSoundFromBlob(blob);
+    setAsset(asset);
 
     if (playRef.current) {
       const playButton = playRef.current.parentElement.parentElement;
       playButton.disabled = false;
       playButton.classList.remove(styles.groupButtonToggledOff);
     }
-  };
-
-  if (soundAsset && ref.ws) {
-    if (ref.ws.isPlaying()) {
-      ref.ws.stop();
-    }
-    ref.ws.empty();
-    if (soundAsset.sampleCount > 0) {
-      ref.ws.load(`data:${soundAsset.type};base64,${soundAsset.data}`);
-    }
-  }
+  }, []);
 
   useEffect(() => {
     if (ref.current) {
@@ -186,20 +185,18 @@ export default function Painter({ soundList, soundIndex }) {
         cursorColor: 'hsla(215, 100%, 65%, 0)',
         cursorWidth: 0,
       });
-      ref.record = ref.ws.registerPlugin(RecordPlugin.create());
+      ref.record = ref.ws.registerPlugin(waveRecorder);
+      ref.record.on('record-start', handleRecord);
+      ref.record.on('record-end', handleRecordEnd);
       ref.ws.on('play', handlePlay);
       ref.ws.on('pause', handlePause);
       ref.ws.on('finish', handlePause);
       ref.ws.on('seeking', handleSeeking);
-      ref.record.on('record-start', handleRecord);
-      ref.record.on('record-end', handleRecordEnd);
-      if (soundAsset) {
+      if (sound?.sampleCount > 0) {
         ref.ws.empty();
-        if (soundAsset.sampleCount > 0) {
-          ref.ws.load(`data:${soundAsset.type};base64,${soundAsset.data}`);
-        }
-        ref.record.soundAsset = soundAsset;
+        ref.ws.load(`data:${sound.type};base64,${sound.data}`);
       }
+      ref.record.sound = sound;
     }
     return () => {
       if (ref.ws) {
@@ -210,19 +207,19 @@ export default function Painter({ soundList, soundIndex }) {
 
   return (
     <div
-      className={classNames(styles.surferWrapper, {
+      className={classNames(styles.waveWrapper, {
         [styles.disabled]: disabled,
       })}
     >
       <div className={styles.row}>
         <div className={styles.group}>
-          <Label text={getText('waveSurfer.surfer.sound', 'Sound')}>
+          <Label text={translate('sound.sound', 'Sound')}>
             <BufferedInput
               disabled={disabled}
               className={styles.nameInput}
-              placeholder={getText('waveSurfer.surfer.name', 'name')}
+              placeholder={translate('sound.name', 'name')}
               onSubmit={(value) => handleChange('name', value)}
-              value={soundAsset ? soundAsset.name : getText('waveSurfer.surfer.sound', 'Sound')}
+              value={disabled || !sound ? translate('sound.sound', 'Sound') : maybeTranslate(sound.name)}
             />
           </Label>
         </div>
@@ -231,7 +228,9 @@ export default function Painter({ soundList, soundIndex }) {
       <div className={styles.row}>
         <div
           ref={ref}
-          className={styles.waveBoxWrapper}
+          className={classNames(styles.waveBoxWrapper, {
+            [styles.hidden]: disabled,
+          })}
         />
       </div>
 
@@ -246,11 +245,11 @@ export default function Painter({ soundList, soundIndex }) {
             ref={playRef}
             src={playIcon}
             className={styles.buttonIcon}
-            title={getText('waveSurfer.surfer.play', 'Play')}
+            title={translate('sound.play', 'Play')}
           />
         </Button>
 
-        {soundAsset && soundAsset.record && (
+        {sound?.record && (
           <Button
             className={classNames(styles.button, styles.recordButton, {
               [styles.groupButtonToggledOff]: disabled,
@@ -261,7 +260,7 @@ export default function Painter({ soundList, soundIndex }) {
               ref={recordRef}
               src={recordIcon}
               className={styles.buttonIcon}
-              title={getText('waveSurfer.surfer.record', 'Record')}
+              title={translate('sound.record', 'Record')}
             />
           </Button>
         )}
