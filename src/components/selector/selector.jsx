@@ -1,7 +1,7 @@
 import { batch } from '@preact/signals';
 import { nanoid } from '@blockcode/utils';
 import {
-  useTranslator,
+  useLocalesContext,
   useProjectContext,
   translate,
   setAlert,
@@ -25,7 +25,8 @@ import fileUploadIcon from './icons/icon-file-upload.svg';
 import { useCallback } from 'preact/hooks';
 
 export function Selector({ onShowLibrary, onSurprise }) {
-  const translator = useTranslator();
+  const { translator } = useLocalesContext();
+
   const { assets, assetId } = useProjectContext();
 
   const sounds = assets.value.filter((res) => /^audio\//.test(res.type));

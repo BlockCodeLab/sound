@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from 'preact/hooks';
 import { classNames } from '@blockcode/utils';
-import { useTranslator, useProjectContext, translate, maybeTranslate, setAsset } from '@blockcode/core';
+import { useLocalesContext, useProjectContext, translate, maybeTranslate, setAsset } from '@blockcode/core';
 import { loadSoundFromBlob } from '../../lib/load-sound';
 
 import WaveSurfer from 'wavesurfer.js';
@@ -22,7 +22,7 @@ export function Wave() {
   const playRef = useRef();
   const recordRef = useRef();
 
-  const translator = useTranslator();
+  const { translator } = useLocalesContext();
   const { asset } = useProjectContext();
 
   const sound = asset.value;
